@@ -1,0 +1,31 @@
+{
+  "name": "services-auth-mixin",
+  "version": "1.3.0",
+  "description": "Rancagua Digital Molecules services authentication mixin",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RancaguaInnova/services-auth-mixin.git"
+  },
+  "keywords": [
+    "microservices",
+    "moleculer",
+    "rancagua-digital",
+    "auth"
+  ],
+  "author": "Joaquín Gumucio Labbé <jjgumucio@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RancaguaInnova/services-auth-mixin/issues"
+  },
+  "homepage": "https://github.com/RancaguaInnova/services-auth-mixin#readme",
+  "dependencies": {
+    "bcrypt": "^3.0.6",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.15",
+    "moleculer": "^0.13.10"
+  }
+}
