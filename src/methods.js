@@ -2,12 +2,15 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const intersection = require('lodash/intersection')
 const startsWith = require('lodash/startsWith')
-const { MoleculerClientError, MoleculerServerError } = require('moleculer').Errors
+const {
+  MoleculerClientError,
+  MoleculerServerError,
+} = require('moleculer').Errors
 
 const UNAUTHORIZED_ERROR = new MoleculerClientError(
   'User does not have the required permissions',
   403,
-  'Forbidden'
+  'Forbidden',
 )
 
 /**
@@ -16,7 +19,7 @@ const UNAUTHORIZED_ERROR = new MoleculerClientError(
  * @param {object} request Moleculer/Node request object
  * @returns {object} With the auth type as key, token as value
  */
-const getToken = request => {
+const getToken = (request) => {
   const { headers } = request
   if (headers && headers.authorization) {
     const authType = startsWith(headers.authorization, 'Basic ')
@@ -39,11 +42,27 @@ const getToken = request => {
  *
  * @returns
  */
-const isAuthenticated = async context => {
-  if (!context.meta.user) {
+const isAuthenticated = async (context) => {
+  try {
+    if (!context.meta.user) {
+      return Promise.reject(UNAUTHORIZED_ERROR)
+    } else if (context.meta.user) {
+      let user = context.meta.user
+      if (user.name && user.name === 'JsonWebTokenError') {
+        return Promise.reject(UNAUTHORIZED_ERROR)
+      }
+      let d = new Date(user.expiresAt)
+      d.setHours(d.getHours() + 4)
+      let n = d.getTime()
+      var fechaNow = Date.now()
+      if (n < fechaNow) {
+        return Promise.reject(UNAUTHORIZED_ERROR)
+      }
+      return Promise.resolve(context)
+    }
+  } catch (e) {
     return Promise.reject(UNAUTHORIZED_ERROR)
   }
-  return Promise.resolve(context)
 }
 
 const getUserDataFromToken = async function (context, tokenObj) {
@@ -63,7 +82,8 @@ const getUserDataFromToken = async function (context, tokenObj) {
  */
 const hasRole = async function (context) {
   const { action, meta } = context
-  const isAuthorized = action.roles && intersection(meta.user.roles, action.roles).length
+  const isAuthorized =
+    action.roles && intersection(meta.user.roles, action.roles).length
   const isOwner = await this.Owner(context)
 
   if (!isAuthorized && !isOwner) {
@@ -125,8 +145,8 @@ const checkPasswords = async function (password, user) {
       new MoleculerServerError(
         `Could not compare passwords: ${error.message}`,
         500,
-        'InternalServerError'
-      )
+        'InternalServerError',
+      ),
     )
   }
 }
@@ -170,5 +190,5 @@ module.exports = {
   isOwner,
   hasRole,
   isExternalyAuthenticated,
-  verifyToken
+  verifyToken,
 }
