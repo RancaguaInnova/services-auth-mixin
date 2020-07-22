@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RancaguaInnova/services-auth-mixin.git"
@@ -16,7 +19,7 @@
     "rancagua-digital",
     "auth"
   ],
-  "author": "Joaquín Gumucio Labbé <jjgumucio@gmail.com>",
+  "author": "Jaime Pérez Romero <jaime@smart.rancagua.cl>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/RancaguaInnova/services-auth-mixin/issues"
