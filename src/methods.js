@@ -1,17 +1,17 @@
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
-const intersection = require('lodash/intersection')
-const startsWith = require('lodash/startsWith')
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const intersection = require('lodash/intersection');
+const startsWith = require('lodash/startsWith');
 const {
   MoleculerClientError,
-  MoleculerServerError,
-} = require('moleculer').Errors
+  MoleculerServerError
+} = require('moleculer').Errors;
 
 const UNAUTHORIZED_ERROR = new MoleculerClientError(
   'User does not have the required permissions',
   403,
-  'Forbidden',
-)
+  'Forbidden'
+);
 
 /**
  * Get the authorization token from a request object
@@ -19,20 +19,25 @@ const UNAUTHORIZED_ERROR = new MoleculerClientError(
  * @param {object} request Moleculer/Node request object
  * @returns {object} With the auth type as key, token as value
  */
-const getToken = (request) => {
-  const { headers } = request
+const getToken = request => {
+  const { headers } = request;
   if (headers && headers.authorization) {
     const authType = startsWith(headers.authorization, 'Basic ')
       ? 'basic'
-      : 'bearer'
+      : 'bearer';
+
     if (authType === 'basic') {
-      return { basicToken: headers.authorization.slice(6) }
+      return {
+        basicToken: headers.authorization.slice(6)
+      };
     } else {
-      return { bearerToken: headers.authorization.slice(7) }
+      return {
+        bearerToken: headers.authorization.slice(7)
+      };
     }
   }
-  return {}
-}
+  return {};
+};
 
 /**
  * Checks if the requesting user has a session/token.
@@ -42,38 +47,44 @@ const getToken = (request) => {
  *
  * @returns
  */
-const isAuthenticated = async (context) => {
+const isAuthenticated = async context => {
   try {
     if (!context.meta.user) {
-      return Promise.reject(UNAUTHORIZED_ERROR)
+      return Promise.reject(UNAUTHORIZED_ERROR);
     } else if (context.meta.user) {
-      let user = context.meta.user
+      let user = context.meta.user;
       if (user.name && user.name === 'JsonWebTokenError') {
-        return Promise.reject(UNAUTHORIZED_ERROR)
+        return Promise.reject(UNAUTHORIZED_ERROR);
       }
-      let d = new Date(user.expiresAt)
-      d.setHours(d.getHours() + 4)
-      let n = d.getTime()
-      var fechaNow = Date.now()
+      let d = new Date(user.expiresAt);
+      d.setHours(d.getHours() + 4);
+      let n = d.getTime();
+      var fechaNow = Date.now();
       if (n < fechaNow) {
-        return Promise.reject(UNAUTHORIZED_ERROR)
+        return Promise.reject(UNAUTHORIZED_ERROR);
       }
-      return Promise.resolve(context)
+      return Promise.resolve(context);
     }
   } catch (e) {
-    return Promise.reject(UNAUTHORIZED_ERROR)
+    console.log('e', e);
+    return Promise.reject(UNAUTHORIZED_ERROR);
   }
-}
+};
 
 const getUserDataFromToken = async function (context, tokenObj) {
-  const token = Object.values(tokenObj)[0]
+  const token = Object.values(tokenObj)[0];
+
   try {
-    return token ? await context.call('v1.auth.isTokenValid', { token }) : null
+    return token
+      ? await context.call('v1.auth.isTokenValid', {
+        token
+      })
+      : null;
   } catch (error) {
-    this.logger.error('Error validating token:', error)
-    return Promise.reject(UNAUTHORIZED_ERROR)
+    this.logger.error('Error validating token:', error);
+    return Promise.reject(UNAUTHORIZED_ERROR);
   }
-}
+};
 
 /**
  * Checks that the requesting user has the required action role(s)
@@ -81,17 +92,22 @@ const getUserDataFromToken = async function (context, tokenObj) {
  * @param {Object} context Service/Action context information
  */
 const hasRole = async function (context) {
-  const { action, meta } = context
-  const isAuthorized =
-    action.roles && intersection(meta.user.roles, action.roles).length
-  const isOwner = await this.Owner(context)
-
-  if (!isAuthorized && !isOwner) {
-    return Promise.reject(UNAUTHORIZED_ERROR)
-  } else {
-    return Promise.resolve(context)
+  try {
+    const { action, meta } = context;
+    const isAuthorized =
+      action.roles && intersection(meta.user.roles, action.roles).length;
+    // const isOwner = await this.isOwner(context)
+    // FIX: hasRole only apply role validation @joseAbarcaSaavedra
+    if (!isAuthorized /* && !isOwner */) {
+      return Promise.reject(UNAUTHORIZED_ERROR);
+    } else {
+      return Promise.resolve(context);
+    }
+  } catch (error) {
+    console.log('[hasRole]', error);
+    return Promise.reject(UNAUTHORIZED_ERROR);
   }
-}
+};
 
 /**
  * Check if the requesting user owns the requested resource
@@ -99,13 +115,13 @@ const hasRole = async function (context) {
  * @param {Object} context Service/Action context information
  */
 const isOwner = async function (context) {
-  const { user, resourceId } = context.meta
+  const { user, resourceId } = context.meta;
   if (user.id === resourceId) {
-    return Promise.resolve(context)
+    return Promise.resolve(context);
   } else {
-    return Promise.reject(UNAUTHORIZED_ERROR)
+    return Promise.reject(UNAUTHORIZED_ERROR);
   }
-}
+};
 
 /**
  * Check if the external invocation is authenticated
@@ -114,18 +130,18 @@ const isOwner = async function (context) {
  * @param {Object} context Service/Action context information
  */
 const isExternalyAuthenticated = async function (context) {
-  const { basicToken } = context.meta
+  const { basicToken } = context.meta;
   if (basicToken) {
-    const bufferToken = Buffer.from(basicToken, 'base64').toString('ascii')
-    const envToken = process.env.EXTERNAL_AUTH
+    const bufferToken = Buffer.from(basicToken, 'base64').toString('ascii');
+    const envToken = process.env.EXTERNAL_AUTH;
     if (bufferToken === envToken) {
-      return Promise.resolve(context)
+      return Promise.resolve(context);
     } else {
-      return Promise.reject(UNAUTHORIZED_ERROR)
+      return Promise.reject(UNAUTHORIZED_ERROR);
     }
   }
-  return Promise.reject(UNAUTHORIZED_ERROR)
-}
+  return Promise.reject(UNAUTHORIZED_ERROR);
+};
 
 /**
  * Check passwords
@@ -138,18 +154,18 @@ const isExternalyAuthenticated = async function (context) {
  */
 const checkPasswords = async function (password, user) {
   try {
-    return await bcrypt.compare(password, user.services.password.bcrypt)
+    return await bcrypt.compare(password, user.services.password.bcrypt);
   } catch (error) {
-    console.log('Could not compare passwords:', error.message)
+    console.log('Could not compare passwords:', error.message);
     return Promise.reject(
       new MoleculerServerError(
         `Could not compare passwords: ${error.message}`,
         500,
-        'InternalServerError',
-      ),
-    )
+        'InternalServerError'
+      )
+    );
   }
-}
+};
 
 /**
  * Verify that the token is valid and return its payload
@@ -161,11 +177,12 @@ const checkPasswords = async function (password, user) {
 const verifyToken = function (token) {
   return jwt.verify(token, process.env.JWT_SECRET, (error, payload) => {
     if (error) {
-      return Promise.reject(error)
+      console.log('error', error);
+      return Promise.reject(error);
     }
-    return payload
-  })
-}
+    return payload.data;
+  });
+};
 
 /**
  * Checks if the user has verified his email
@@ -176,10 +193,10 @@ const verifyToken = function (token) {
  */
 const hasVerifiedEmail = function (user) {
   if (user.emails && user.emails[0].verified) {
-    return true
+    return true;
   }
-  return false
-}
+  return false;
+};
 
 module.exports = {
   checkPasswords,
@@ -190,5 +207,5 @@ module.exports = {
   isOwner,
   hasRole,
   isExternalyAuthenticated,
-  verifyToken,
-}
+  verifyToken
+};
