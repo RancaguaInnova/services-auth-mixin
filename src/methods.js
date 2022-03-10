@@ -179,11 +179,14 @@ const verifyToken = function (token) {
     token,
     process.env.JWT_SECRET,
     (error, payload = { data: null }) => {
-      if (error) {
-        console.log('error', error);
+      try {
+        if (error) {
+          return Promise.reject(error);
+        }
+        return payload.data;
+      } catch (error) {
         return Promise.reject(error);
       }
-      return payload.data;
     }
   );
 };
