@@ -175,13 +175,17 @@ const checkPasswords = async function (password, user) {
  * @returns {Object} Users data / token payload
  */
 const verifyToken = function (token) {
-  return jwt.verify(token, process.env.JWT_SECRET, (error, payload) => {
-    if (error) {
-      console.log('error', error);
-      return Promise.reject(error);
+  return jwt.verify(
+    token,
+    process.env.JWT_SECRET,
+    (error, payload = { data: null }) => {
+      if (error) {
+        console.log('error', error);
+        return Promise.reject(error);
+      }
+      return payload.data;
     }
-    return payload.data;
-  });
+  );
 };
 
 /**
