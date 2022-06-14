@@ -2,10 +2,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const intersection = require('lodash/intersection')
 const startsWith = require('lodash/startsWith')
-const {
-  MoleculerClientError,
-  MoleculerServerError
-} = require('moleculer').Errors
+const { MoleculerClientError, MoleculerServerError } =
+  require('moleculer').Errors
 
 const UNAUTHORIZED_ERROR = new MoleculerClientError(
   'User does not have the required permissions',
@@ -19,7 +17,7 @@ const UNAUTHORIZED_ERROR = new MoleculerClientError(
  * @param {object} request Moleculer/Node request object
  * @returns {object} With the auth type as key, token as value
  */
-const getToken = request => {
+const getToken = (request) => {
   const { headers } = request
   if (headers && headers.authorization) {
     const authType = startsWith(headers.authorization, 'Basic ')
@@ -40,6 +38,28 @@ const getToken = request => {
 }
 
 /**
+ * Checks if the requesting user is authorized to access
+ * based on dynamic role array.
+ *
+ * @param {Object} context Service/Action context information
+ *
+ * @returns
+ */
+function roleAccess(authorized = []) {
+  return async function (context) {
+    try {
+      const { meta } = context
+      const isAuthorized = intersection(meta.user.roles, authorized).length
+      return isAuthorized > 0
+        ? Promise.resolve(context)
+        : Promise.reject(UNAUTHORIZED_ERROR)
+    } catch (error) {
+      return Promise.reject(UNAUTHORIZED_ERROR)
+    }
+  }
+}
+
+/**
  * Checks if the requesting user has a session/token.
  * Sets the token payload to context.meta if a session/token is found.
  *
@@ -47,7 +67,7 @@ const getToken = request => {
  *
  * @returns
  */
-const isAuthenticated = async context => {
+const isAuthenticated = async (context) => {
   try {
     const { origin } = context.meta
     if (!context.meta.user) {
@@ -79,8 +99,8 @@ const getUserDataFromToken = async function (context, tokenObj) {
   try {
     return token
       ? await context.call('v1.auth.isTokenValid', {
-        token
-      })
+          token
+        })
       : null
   } catch (error) {
     this.logger.error('Error validating token:', error)
@@ -215,6 +235,7 @@ module.exports = {
   isAuthenticated,
   isOwner,
   hasRole,
+  roleAccess,
   isExternalyAuthenticated,
   verifyToken
 }
