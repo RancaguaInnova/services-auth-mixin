@@ -2,10 +2,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const intersection = require('lodash/intersection')
 const startsWith = require('lodash/startsWith')
-const {
-  MoleculerClientError,
-  MoleculerServerError
-} = require('moleculer').Errors
+const { MoleculerClientError, MoleculerServerError } =
+  require('moleculer').Errors
 
 const UNAUTHORIZED_ERROR = new MoleculerClientError(
   'User does not have the required permissions',
@@ -19,7 +17,7 @@ const UNAUTHORIZED_ERROR = new MoleculerClientError(
  * @param {object} request Moleculer/Node request object
  * @returns {object} With the auth type as key, token as value
  */
-const getToken = request => {
+const getToken = (request) => {
   const { headers } = request
   if (headers && headers.authorization) {
     const authType = startsWith(headers.authorization, 'Basic ')
@@ -47,7 +45,7 @@ const getToken = request => {
  *
  * @returns
  */
-const isAuthenticated = async context => {
+const isAuthenticated = async (context) => {
   try {
     const { origin } = context.meta
     if (!context.meta.user) {
@@ -79,8 +77,8 @@ const getUserDataFromToken = async function (context, tokenObj) {
   try {
     return token
       ? await context.call('v1.auth.isTokenValid', {
-        token
-      })
+          token
+        })
       : null
   } catch (error) {
     this.logger.error('Error validating token:', error)
@@ -180,12 +178,18 @@ const verifyToken = function (token) {
   return jwt.verify(
     token,
     process.env.JWT_SECRET,
-    (error, payload = { data: null }) => {
+    (error, payload = { data: null, id: null }) => {
       try {
         if (error) {
           return Promise.reject(error)
         }
-        return payload.data
+        const data = payload.data
+          ? payload.data
+          : payload.id
+          ? { ...payload }
+          : null
+
+        return data
       } catch (error) {
         return Promise.reject(error)
       }
