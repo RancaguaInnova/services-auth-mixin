@@ -8,6 +8,7 @@ const {
   isAuthenticated,
   isOwner,
   hasRole,
+  roleAccess,
   isExternalyAuthenticated,
   verifyToken
 } = require('./methods')
@@ -21,6 +22,7 @@ module.exports = {
     isAuthenticated,
     isOwner,
     hasRole,
+    roleAccess,
     isExternalyAuthenticated,
     verifyToken
   }

@@ -38,6 +38,28 @@ const getToken = (request) => {
 }
 
 /**
+ * Checks if the requesting user is authorized to access
+ * based on dynamic role array.
+ *
+ * @param {Object} context Service/Action context information
+ *
+ * @returns
+ */
+function roleAccess(authorized = []) {
+  return async function (context) {
+    try {
+      const { meta } = context
+      const isAuthorized = intersection(meta.user.roles, authorized).length
+      return isAuthorized > 0
+        ? Promise.resolve(context)
+        : Promise.reject(UNAUTHORIZED_ERROR)
+    } catch (error) {
+      return Promise.reject(UNAUTHORIZED_ERROR)
+    }
+  }
+}
+
+/**
  * Checks if the requesting user has a session/token.
  * Sets the token payload to context.meta if a session/token is found.
  *
@@ -219,6 +241,7 @@ module.exports = {
   isAuthenticated,
   isOwner,
   hasRole,
+  roleAccess,
   isExternalyAuthenticated,
   verifyToken
 }
