@@ -211,6 +211,10 @@ const verifyToken = function (token) {
           ? { ...payload }
           : null
 
+        // Add default role @jabarca
+        if (data.roles && data.roles.length === 0) {
+          data.roles.push('user')
+        }
         return data
       } catch (error) {
         return Promise.reject(error)
