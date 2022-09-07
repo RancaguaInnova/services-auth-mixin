@@ -21,6 +21,7 @@ const UNAUTHORIZED_ERROR = new MoleculerClientError(
  */
 const getToken = request => {
   const { headers, body, query } = request
+  const secret = query && query.secret || false
   if (headers && headers.authorization) {
     const authType = startsWith(headers.authorization, 'Basic ')
       ? 'basic'
@@ -35,7 +36,7 @@ const getToken = request => {
         bearerToken: headers.authorization.slice(7)
       }
     }
-  } else if ((body && body.token) || (query && query.token)) {
+  } else if ((!secret && ((body && body.token) || (query && query.token)))) {
     const paramsToken = body && body.token ? body.token : query.token
     return { paramsToken }
   }
