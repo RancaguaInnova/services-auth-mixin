@@ -27,7 +27,7 @@
   "homepage": "https://github.com/RancaguaInnova/services-auth-mixin#readme",
   "dependencies": {
     "bcrypt": "^3.0.6",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.15",
     "moleculer": "^0.13.10"
   }
